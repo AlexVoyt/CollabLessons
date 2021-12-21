@@ -39,7 +39,7 @@
 *       gcc -o $(NAME_PART).exe $(FILE_NAME) -s -static -lraylib -lopengl32 -lgdi32 -lwinmm -std=c99
 *
 *   VERSIONS HISTORY:
-*       1.1 (20-Jan-2021) @raysan5: Library general revision 
+*       1.1 (20-Jan-2021) @raysan5: Library general revision
 *               Removed threading system (up to the user)
 *               Support MSVC C++ compilation using CLITERAL()
 *               Review DEBUG mechanism for TRACELOG() and all TRACELOG() messages
@@ -91,7 +91,7 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define PHYSAC_MAX_BODIES               64          // Maximum number of physic bodies supported
-#define PHYSAC_MAX_MANIFOLDS            4096        // Maximum number of physic bodies interactions (64x64)
+#define PHYSAC_MAX_MANIFOLDS            256        // Maximum number of physic bodies interactions (64x64)
 #define PHYSAC_MAX_VERTICES             24          // Maximum number of vertex for polygons shapes
 #define PHYSAC_DEFAULT_CIRCLE_VERTICES  24          // Default number of vertices for circle shapes
 
@@ -885,7 +885,7 @@ void ClosePhysics(void)
     {
         for (int i = physicsManifoldsCount - 1; i >= 0; i--) DestroyPhysicsManifold(contacts[i]);
     }
-    
+
     // Unitialize physics bodies dynamic memory allocations
     if (physicsBodiesCount > 0)
     {
@@ -893,11 +893,11 @@ void ClosePhysics(void)
     }
 
     // Trace log info
-    if ((physicsBodiesCount > 0) || (usedMemory != 0)) 
+    if ((physicsBodiesCount > 0) || (usedMemory != 0))
     {
         TRACELOG("[PHYSAC] WARNING: Physics module closed with unallocated bodies (BODIES: %i, MEMORY: %i bytes)\n", physicsBodiesCount, usedMemory);
     }
-    else if ((physicsManifoldsCount > 0) || (usedMemory != 0)) 
+    else if ((physicsManifoldsCount > 0) || (usedMemory != 0))
     {
         TRACELOG("[PHYSAC] WARNING: Pysics module closed with unallocated manifolds (MANIFOLDS: %i, MEMORY: %i bytes)\n", physicsManifoldsCount, usedMemory);
     }
@@ -1010,7 +1010,7 @@ static void UpdatePhysicsStep(void)
         PhysicsBody body = bodies[i];
         body->isGrounded = false;
     }
- 
+
     // Generate new collision information
     for (unsigned int i = 0; i < physicsBodiesCount; i++)
     {

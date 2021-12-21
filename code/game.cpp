@@ -7,10 +7,10 @@
 
 enum entity_type
 {
-    Type_Crab,
-    Type_Projectile,
-    Type_Grenade,
-    Type_Box
+    EntityType_Crab,
+    EntityType_Projectile,
+    EntityType_Grenade,
+    EntityType_Box
 };
 
 enum weapon_type
@@ -23,36 +23,12 @@ enum weapon_type
 
 struct entity
 {
-    float density = 10;
-    float crabSize = 50;
-    float projectileSize = 5;
-    float boxSize = 30;
-
-    entity(Vector2 vec, entity_type type)
-    {
-        switch (type)
-        {
-        case Type_Crab:
-            b = CreatePhysicsBodyRectangle(vec, crabSize, crabSize, density);
-            b->freezeOrient = true;
-            break;
-        case Type_Projectile:
-            b = CreatePhysicsBodyRectangle(vec, projectileSize, projectileSize, density-8);
-            break;
-        case Type_Box:
-            b = CreatePhysicsBodyRectangle(vec, boxSize, boxSize, density+10);
-            break;
-        default:
-            break;
-        }
-    }
     /*
         Common
-
     */
-    PhysicsBody b;
 
-    // TODO create projectile
+    entity_type Type;
+    PhysicsBody Body;
 
     union
     {
@@ -81,6 +57,47 @@ enum
     WindowHeight = 600,
 };
 
+struct entity_array
+{
+    int EntityCount;
+    entity Entities[8]; // TODO: sync this whit physac
+};
+#define ArrayCount(x) sizeof((x))/sizeof((x)[0])
+
+entity* CreateEntity(entity_array* Array, entity_type Type, Vector2 Pos, Vector2 Size, float Density)
+{
+    entity* Result = 0;
+    if(Array->EntityCount >= ArrayCount(Array->Entities))
+    {
+        // TODO:
+    }
+    else
+    {
+        Result = &Array->Entities[Array->EntityCount];
+        Result->Type = Type;
+        Result->Body = CreatePhysicsBodyRectangle(Pos, (float)Size.x, Size.y, Density);
+
+        Array->EntityCount++;
+    }
+
+    return Result;
+}
+
+entity* CreateEntityCrab(entity_array* Array, Vector2 Pos)
+{
+    entity* Result = CreateEntity(Array, EntityType_Crab, Pos, {100, 100}, 10);
+    Result->Crab.Health = 10;
+
+    return Result;
+}
+
+entity* CreateEntityProjectile(entity_array* Array, Vector2 Pos, Vector2 Size)
+{
+    entity* Result = CreateEntity(Array, EntityType_Projectile, Pos, Size, 10);
+
+    return Result;
+}
+
 int main()
 {
 
@@ -89,14 +106,18 @@ int main()
     Vector2 CrabDim = {20, 20};
     Color CrabColor = RED;
 
+    entity_array _EntityArray = {0};
+    entity_array* EntityArray = &_EntityArray;
+
     Vector2 StaticWraithPos = {500, 300};
 
     InitWindow(WindowWidth, WindowHeight, "Game title");
     // TODO: what this function actually does
-    
+
     InitPhysics();
 
-    entity crabRec(CrabPosition, Type_Crab);
+    entity* crabRec = CreateEntityCrab(EntityArray, {800/2, 250});
+
     PhysicsBody floor = CreatePhysicsBodyRectangle({ 800 / 2.0f, (float)450 }, (float)450, 100, 10);
     floor->enabled = false;
 
@@ -120,15 +141,20 @@ int main()
     float AnimationTimer = 0;
     int Frame = 0;
     int Step = 0;
+
     while (!WindowShouldClose())
     {
-        UpdatePhysics();     
+        UpdatePhysics();
 
-        if (IsKeyDown(KEY_SPACE)) entity bullet(CrabPosition, Type_Projectile);
+        if (IsKeyDown(KEY_SPACE))
+        {
+            CreateEntityProjectile(EntityArray, {CrabPosition.x, CrabPosition.y - 100,}, {15, 8});
+        }
 
 
-        if (IsKeyDown(KEY_RIGHT)) crabRec.b->velocity.x += 0.1f;
-        if (IsKeyDown(KEY_LEFT)) crabRec.b->velocity.x -= 0.1f;
+
+        // if (IsKeyDown(KEY_RIGHT)) crabRec.b->velocity.x += 0.1f;
+        // if (IsKeyDown(KEY_LEFT)) crabRec.b->velocity.x -= 0.1f;
         // if (IsKeyDown(KEY_UP)) CrabPosition.y -= 2.0f;
         // if (IsKeyDown(KEY_DOWN)) CrabPosition.y += 2.0f;
         // if (IsKeyDown(KEY_SPACE)) CrabPosition.x = 0.0f;
@@ -141,9 +167,9 @@ int main()
         if (IsKeyPressed(KEY_R))      // Reset physics input
         {
             // Reset movement physics body position, velocity and rotation
-            crabRec.b->position = { 250, 0};
-            crabRec.b->velocity = { 0, 0 };
-            SetPhysicsBodyRotation(crabRec.b, 0);
+            crabRec->Body->position = { 250, 0};
+            crabRec->Body->velocity = { 0, 0 };
+            SetPhysicsBodyRotation(crabRec->Body, 0);
         }
 
 #if 0
@@ -161,7 +187,7 @@ int main()
         ClearBackground(RAYWHITE);
 
         float Scale = 0.4;
-        DrawTextureEx(Crab[0], {crabRec.b->position.x - 350 * Scale, crabRec.b->position.y - 324 * Scale } , 0, Scale, PINK);
+        DrawTextureEx(Crab[0], {crabRec->Body->position.x - 350 * Scale, crabRec->Body->position.y - 324 * Scale } , 0, Scale, PINK);
         float dt = GetFrameTime();
         AnimationTimer += dt;
         if(AnimationTimer > 0.1)
@@ -196,14 +222,7 @@ int main()
 
     ClosePhysics();
 
-    CloseWindow(); 
+    CloseWindow();
 
     return 0;
 }
-#if 1
-
-
-
-
-
-#endif
